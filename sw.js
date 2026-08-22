@@ -1,5 +1,5 @@
-const CACHE='lumina-v6';
-const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg'];
+const CACHE='lumina-v7';
+const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./fflate.min.js'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));
 });
