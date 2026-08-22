@@ -130,6 +130,46 @@ const books = [
       '"贝茜说我做了什么？"我问道。',
       '"简，我不喜欢吹毛求疵或者刨根问底的人；再说，一个孩子这样顶撞长辈，确实让人厌恶。找个地方坐下，在你学会好好说话之前，就保持安静吧。"'
     ]
+  },
+  {
+    id: 'book-som-ch1',
+    kind: 'book',
+    bookId: 'solo-on-mars',
+    bookTitle: 'Solo on Mars',
+    bookTitleCn: '火星独行',
+    author: '原创示范（非版权书）',
+    chapter: 1,
+    chapterTitle: 'Chapter 1 — The Dust',
+    chapterTitleCn: '第一章 · 尘埃',
+    source: '原创示范',
+    category: 'book',
+    level: 'IELTS 7.5+',
+    license: '原创示范内容（同题材演示；《火星救援》等版权书请自行上传 EPUB）',
+    sourceUrl: '',
+    excerpt: 'The dust is the first thing you learn to hate on Mars.',
+    excerptCn: '在火星上，你最先学会恨的是尘埃。',
+    readingMin: 5,
+    tags: ['科幻', '火星', '原创'],
+    collocations: ['get into', 'keep a log', 'as of', 'the lottery of', 'ration hard', 'step one'],
+    quotes: [
+      'The dust is the first thing you learn to hate on Mars.'
+    ],
+    body: [
+      'The dust is the first thing you learn to hate on Mars. It gets into everything—your suit joints, your air filters, your lungs if you are unlucky. On sol forty-one, I decided I hated the dust more than the cold, and I started keeping a log to stay sane.',
+      'My name is Lin Chen, and as of this morning, I am the only human being on this planet. The Hermes left orbit at 06:12. I watched its engines burn from the Hab window until it was just another star, and then I watched the dust rise again.',
+      'The mission brief called it a "contained anomaly." Six people came down. Five went up. I stayed, because somebody had to stay, and the lottery of bad luck had my name on it.',
+      'So here is the math. Food: three hundred and forty-one sols, if I ration hard. Oxygen: fine, the generator is holding. Water: I can recycle, but the electrolysis unit has a fault I need to fix before sol sixty. Sanity: currently the scarcest resource of all.',
+      'Step one, survive. Step two, signal. Step three, do not think about home—because thinking about home is how you lose a whole day staring at a wall.',
+      'I will fix the rover tomorrow. Tonight, I will write. If someone ever reads this, know that I did not go quietly.'
+    ],
+    bodyCn: [
+      '在火星上，你最先学会恨的是尘埃。它无孔不入——钻进你的宇航服接缝、空气过滤器，倒霉的话还会钻进你的肺。第四十一个火星日那天，我认定自己恨尘埃胜过恨严寒，于是开始写日志，好让自己不至于发疯。',
+      '我叫林晨。从今天早上起，我是这个星球上唯一的人类。赫尔墨斯号于 06:12 离开轨道。我从居住舱的窗子望着它的尾焰，直到它变成又一颗星星，然后我又看见尘埃重新升起。',
+      '任务简报把这称作"可控异常"。六个人下来，五个人上去。我留了下来，因为总得有人留下，而厄运的抽签恰好抽中了我。',
+      '那么来算一笔账。食物：如果严格配给，能撑三百四十一个火星日。氧气：没问题，发电机还在运转。水：可以循环利用，但电解装置有个故障，必须在第六十个火星日之前修好。至于理智——眼下才是最稀缺的资源。',
+      '第一步，活下去。第二步，发信号。第三步，别想家——因为想家会让你对着墙发呆，一整天就没了。',
+      '明天我会去修火星车。今晚，我要写点东西。如果将来有人读到这些，请记住：我没有悄无声息地离开。'
+    ]
   }
 ];
 
