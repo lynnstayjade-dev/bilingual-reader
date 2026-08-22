@@ -159,7 +159,18 @@ const BOOK_CATALOG = [
   { id: 'jane-eyre',            title: 'Jane Eyre',            titleCn: '简·爱',         author: 'Charlotte Brontë',   gutenberg: 1260, level: 'IELTS 7.5+' },
   { id: 'sherlock-holmes',      title: 'The Adventures of Sherlock Holmes', titleCn: '福尔摩斯探案集', author: 'Arthur Conan Doyle', gutenberg: 1661, level: 'IELTS 8' },
   { id: 'great-expectations',   title: 'Great Expectations',   titleCn: '远大前程',     author: 'Charles Dickens',    gutenberg: 1400, level: 'IELTS 8' },
-  { id: 'wuthering-heights',    title: 'Wuthering Heights',    titleCn: '呼啸山庄',     author: 'Emily Brontë',       gutenberg: 768,  level: 'IELTS 8' }
+  { id: 'wuthering-heights',    title: 'Wuthering Heights',    titleCn: '呼啸山庄',     author: 'Emily Brontë',       gutenberg: 768,  level: 'IELTS 8' },
+  // 阿加莎·克里斯蒂（1920–1930 作品，2026 年已在中美进入公有领域）
+  { id: 'mysterious-affair-styles', title: 'The Mysterious Affair at Styles', titleCn: '斯泰尔斯庄园奇案', author: 'Agatha Christie', gutenberg: 863,   level: 'IELTS 7.5' },
+  { id: 'secret-adversary',      title: 'The Secret Adversary',           titleCn: '暗藏杀机',       author: 'Agatha Christie', gutenberg: 1155,  level: 'IELTS 7.5' },
+  { id: 'murder-on-the-links',   title: 'The Murder on the Links',        titleCn: '高尔夫球场命案', author: 'Agatha Christie', gutenberg: 58866, level: 'IELTS 7.5' },
+  { id: 'poirot-investigates',   title: 'Poirot Investigates',            titleCn: '首相绑架案',     author: 'Agatha Christie', gutenberg: 61262, level: 'IELTS 7.5' },
+  { id: 'murder-roger-ackroyd',  title: 'The Murder of Roger Ackroyd',    titleCn: '罗杰疑案',       author: 'Agatha Christie', gutenberg: 69087, level: 'IELTS 7.5' },
+  { id: 'the-big-four',          title: 'The Big Four',                   titleCn: '四魔头',         author: 'Agatha Christie', gutenberg: 70114, level: 'IELTS 7.5' },
+  { id: 'mystery-blue-train',    title: 'The Mystery of the Blue Train',  titleCn: '蓝色列车之谜',   author: 'Agatha Christie', gutenberg: 72824, level: 'IELTS 7.5' },
+  { id: 'seven-dials-mystery',   title: 'The Seven Dials Mystery',        titleCn: '七面钟之谜',     author: 'Agatha Christie', gutenberg: 75288, level: 'IELTS 7.5' },
+  { id: 'murder-at-the-vicarage',title: 'The Murder at the Vicarage',     titleCn: '寓所谜案',       author: 'Agatha Christie', gutenberg: 78220, level: 'IELTS 7.5' },
+  { id: 'secret-of-chimneys',    title: 'The Secret of Chimneys',         titleCn: '烟囱庄园的秘密', author: 'Agatha Christie', gutenberg: 65238, level: 'IELTS 7.5' }
 ];
 
 function loadBooks(){ try { return JSON.parse(fs.readFileSync(BOOKS_OUT,'utf8')); } catch(e){ return []; } }
