@@ -147,6 +147,130 @@ function estimateLevel(text){
   return 'IELTS 6.5';
 }
 
+/* ==================== 小说双语采集（Project Gutenberg + Open Library）==================== */
+const BOOKS_OUT = process.env.BOOKS_OUT || path.join(__dirname, 'books.json');
+const BOOKS_PER_RUN = parseInt(process.env.BOOKS_PER_RUN || '2', 10);
+const MAX_CHAPTERS_PER_BOOK = parseInt(process.env.MAX_CHAPTERS_PER_BOOK || '40', 10);
+
+// 经典公版小说书单（Project Gutenberg 项目 ID，均为版权过期、可合法再分发的公版书）
+const BOOK_CATALOG = [
+  { id: 'pride-and-prejudice',  title: 'Pride and Prejudice',  titleCn: '傲慢与偏见',   author: 'Jane Austen',        gutenberg: 1342, level: 'IELTS 7.5+' },
+  { id: 'a-tale-of-two-cities', title: 'A Tale of Two Cities', titleCn: '双城记',       author: 'Charles Dickens',    gutenberg: 98,   level: 'IELTS 7.5+' },
+  { id: 'jane-eyre',            title: 'Jane Eyre',            titleCn: '简·爱',         author: 'Charlotte Brontë',   gutenberg: 1260, level: 'IELTS 7.5+' },
+  { id: 'sherlock-holmes',      title: 'The Adventures of Sherlock Holmes', titleCn: '福尔摩斯探案集', author: 'Arthur Conan Doyle', gutenberg: 1661, level: 'IELTS 8' },
+  { id: 'great-expectations',   title: 'Great Expectations',   titleCn: '远大前程',     author: 'Charles Dickens',    gutenberg: 1400, level: 'IELTS 8' },
+  { id: 'wuthering-heights',    title: 'Wuthering Heights',    titleCn: '呼啸山庄',     author: 'Emily Brontë',       gutenberg: 768,  level: 'IELTS 8' }
+];
+
+function loadBooks(){ try { return JSON.parse(fs.readFileSync(BOOKS_OUT,'utf8')); } catch(e){ return []; } }
+function saveBooks(books){ fs.writeFileSync(BOOKS_OUT, JSON.stringify(books, null, 2), 'utf8'); }
+
+// 下载 Gutenberg 纯文本（尝试两种官方 URL 格式）
+async function fetchGutenbergText(id){
+  const urls = [
+    `https://www.gutenberg.org/cache/epub/${id}/pg${id}.txt`,
+    `https://www.gutenberg.org/files/${id}/${id}-0.txt`
+  ];
+  for (const u of urls){
+    try{
+      const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), 20000);
+      const r = await fetch(u, { signal: ctrl.signal, headers:{'User-Agent':'Mozilla/5.0 DailyReader/1.0'} });
+      clearTimeout(t);
+      if (r.ok){ const txt = await r.text(); if (txt.length > 5000) return txt; }
+    }catch(e){}
+  }
+  return '';
+}
+
+// 清洗 Gutenberg 头尾（license 标记、产出者说明等）
+function cleanGutenberg(text){
+  let t = text;
+  t = t.replace(/\*\*\* START OF (THE|THIS) PROJECT GUTENBERG EBOOK[^\n]*\*\*\*/gi, '');
+  t = t.replace(/\*\*\* END OF (THE|THIS) PROJECT GUTENBERG EBOOK[^\n]*\*\*\*/gi, '');
+  t = t.replace(/Produced by[^\n]*/gi, '');
+  return t;
+}
+
+// 按章节标题切分（CHAPTER I / Chapter 1 / CHAPTER ONE 等）
+function splitChapters(text){
+  const re = /^(?:CHAPTER|Chapter)\s+([IVXLCDM]+|\d+)[.:]?\s*[^\n]*/gm;
+  const marks = []; let m;
+  while ((m = re.exec(text))) marks.push({ idx: m.index, title: m[0].trim() });
+  if (!marks.length) return [];
+  const chapters = [];
+  for (let i=0;i<marks.length;i++){
+    const start = marks[i].idx;
+    const end = i+1<marks.length ? marks[i+1].idx : text.length;
+    chapters.push({ title: marks[i].title, raw: text.slice(start, end) });
+  }
+  return chapters;
+}
+
+// 章节 -> 段落数组（清洗 + 过滤过短/垃圾行）
+function chapterToParas(ch){
+  let body = ch.raw.replace(/^\s*(?:CHAPTER|Chapter)[^\n]*\n?/i, '');
+  return body.split(/\n\s*\n/).map(p=>p.replace(/\s+/g,' ').trim())
+    .filter(p => p.length > 60 && !/^\[|^\*|Produced by|Project Gutenberg|end of|^Illustration/i.test(p));
+}
+
+// Open Library 补封面（cover_i -> covers.openlibrary.org，失败留空）
+async function fetchOpenLibraryCover(book){
+  try{
+    const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), 10000);
+    const r = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}&limit=1`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) return '';
+    const j = await r.json();
+    const doc = j.docs && j.docs[0];
+    if (doc && doc.cover_i) return `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+  }catch(e){}
+  return '';
+}
+
+// 采集下一批小说章节（每天 BOOKS_PER_RUN 章，按书单顺序轮换推进）
+async function ingestBooks(){
+  let books = loadBooks();
+  const existing = new Map();
+  books.forEach(b => { if (b.bookId){ const n = b.chapter || 0; if (!existing.has(b.bookId) || n > existing.get(b.bookId)) existing.set(b.bookId, n); } });
+  let added = 0;
+  for (const bk of BOOK_CATALOG){
+    if (added >= BOOKS_PER_RUN) break;
+    const nextCh = (existing.get(bk.id) || 0) + 1;
+    if (nextCh > MAX_CHAPTERS_PER_BOOK) continue;
+    const full = await fetchGutenbergText(bk.gutenberg);
+    if (!full){ console.warn('✗ [书]', bk.titleCn, '下载失败'); continue; }
+    const chapters = splitChapters(cleanGutenberg(full));
+    if (!chapters.length || nextCh > chapters.length){ console.warn('✗ [书]', bk.titleCn, '无章节或已到末尾'); continue; }
+    const ch = chapters[nextCh - 1];
+    const paras = chapterToParas(ch);
+    if (paras.length < 3){ console.warn('✗ [书]', bk.titleCn, '第', nextCh, '章段落过少'); continue; }
+    const bodyCn = BAIDU_APPID ? await translateParagraphs(paras) : [];
+    const cover = await fetchOpenLibraryCover(bk);
+    const joined = paras.join(' ');
+    books.push({
+      id: `book-${bk.id}-ch${nextCh}`,
+      kind: 'book', bookId: bk.id, bookTitle: bk.title, bookTitleCn: bk.titleCn,
+      author: bk.author, chapter: nextCh,
+      chapterTitle: ch.title, chapterTitleCn: `第${nextCh}章`,
+      source: 'Project Gutenberg', category: 'book', level: bk.level,
+      license: 'Public Domain（公版）',
+      sourceUrl: `https://www.gutenberg.org/ebooks/${bk.gutenberg}`,
+      cover: cover || '',
+      excerpt: paras[0].slice(0,160), excerptCn: (bodyCn[0]||'').slice(0,160),
+      readingMin: Math.max(3, Math.round(joined.split(/\s+/).length / 180)),
+      tags: ['经典文学','公版小说'],
+      collocations: detectCollocations(joined),
+      quotes: detectQuotes(joined),
+      body: paras, bodyCn: bodyCn,
+      date: new Date().toISOString().slice(0,10)
+    });
+    added++;
+    console.log('✓ [书]', bk.titleCn, '第', nextCh, '章（', paras.length, '段）');
+  }
+  saveBooks(books);
+  return added;
+}
+
 /* ---------- 主流程 ---------- */
 async function main(){
   let feeds = DEFAULT_FEEDS;
@@ -183,7 +307,9 @@ async function main(){
   for (const a of all){ if (seen.has(a.id)) continue; seen.add(a.id); uniq.push(a); }
   uniq.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
   fs.writeFileSync(OUT, JSON.stringify(uniq, null, 2));
-  console.log(`\n完成：共 ${uniq.length} 篇 → ${OUT}`);
+  console.log(`\n完成：共 ${uniq.length} 篇外刊 → ${OUT}`);
+  const bookAdded = await ingestBooks();
+  console.log(`小说：新增 ${bookAdded} 章 → ${BOOKS_OUT}`);
   console.log(BAIDU_APPID ? '中文已由百度翻译回填。' : '未配置 BAIDU_APPID：cn 留空，阅读器仅显示英文（可人工精校或用其他翻译源回填）。');
 }
 
