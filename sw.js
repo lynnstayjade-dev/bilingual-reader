@@ -1,4 +1,4 @@
-const CACHE='lumina-v5';
+const CACHE='lumina-v6';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));
@@ -11,7 +11,7 @@ self.addEventListener('fetch',e=>{
   const url=new URL(e.request.url);
   // 页面导航请求 + 数据/词库：网络优先，失败回退缓存 —— 保证新版 UI 与内容更新立即可见
   const isNav = e.request.mode==='navigate';
-  if(isNav || url.pathname.endsWith('articles.json')||url.pathname.endsWith('dict.json')||url.pathname.endsWith('dict.min.json')||url.pathname.endsWith('dict.api.json')||url.href.includes('raw.githubusercontent.com')){
+  if(isNav || url.pathname.endsWith('articles.json')||url.pathname.endsWith('books.json')||url.pathname.endsWith('dict.json')||url.pathname.endsWith('dict.min.json')||url.pathname.endsWith('dict.api.json')||url.href.includes('raw.githubusercontent.com')){
     e.respondWith(fetch(e.request).then(r=>{const cp=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cp));return r;}).catch(()=>caches.match(e.request).then(r=>r||caches.match('./index.html'))));
     return;
   }
