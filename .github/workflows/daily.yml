@@ -9,21 +9,21 @@ jobs:
   ingest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: '24' }
       - name: Run ingest
         env:
           BAIDU_APPID: ${{ secrets.BAIDU_APPID }}
           BAIDU_KEY: ${{ secrets.BAIDU_KEY }}
           MAX_PER_FEED: '6'
         run: node ingest.js
-      - name: Commit articles.json
+      - name: Commit data (articles + books)
         run: |
           git config user.name "DailyReader Bot"
           git config user.email "bot@dailyreader.local"
-          if [ -n "$(git status --porcelain articles.json)" ]; then
-            git add articles.json
+          git add articles.json books.json 2>/dev/null || true
+          if [ -n "$(git status --porcelain)" ]; then
             git commit -m "chore: daily ingest $(date -u +%F)"
             git push
           else
