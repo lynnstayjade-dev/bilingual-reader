@@ -132,43 +132,43 @@ const books = [
     ]
   },
   {
-    id: 'book-som-ch1',
+    id: 'book-mas-ch1',
     kind: 'book',
-    bookId: 'solo-on-mars',
-    bookTitle: 'Solo on Mars',
-    bookTitleCn: '火星独行',
-    author: '原创示范（非版权书）',
+    bookId: 'mysterious-affair-styles',
+    bookTitle: 'The Mysterious Affair at Styles',
+    bookTitleCn: '斯泰尔斯庄园奇案',
+    author: 'Agatha Christie',
     chapter: 1,
-    chapterTitle: 'Chapter 1 — The Dust',
-    chapterTitleCn: '第一章 · 尘埃',
-    source: '原创示范',
+    chapterTitle: 'Chapter 1 — I Go to Styles',
+    chapterTitleCn: '第一章 · 我前往斯泰尔斯',
+    source: 'Project Gutenberg',
     category: 'book',
-    level: 'IELTS 7.5+',
-    license: '原创示范内容（同题材演示；《火星救援》等版权书请自行上传 EPUB）',
-    sourceUrl: '',
-    excerpt: 'The dust is the first thing you learn to hate on Mars.',
-    excerptCn: '在火星上，你最先学会恨的是尘埃。',
+    level: 'IELTS 7.5',
+    license: 'Public Domain（公版）',
+    sourceUrl: 'https://www.gutenberg.org/ebooks/863',
+    excerpt: 'The intense interest aroused in the public by what was known at the time as "The Styles Case" has now somewhat subsided.',
+    excerptCn: '当年轰动一时的"斯泰尔斯庄园案"，如今公众的兴趣已有所消退。',
     readingMin: 5,
-    tags: ['科幻', '火星', '原创'],
-    collocations: ['get into', 'keep a log', 'as of', 'the lottery of', 'ration hard', 'step one'],
+    tags: ['阿加莎·克里斯蒂', '侦探', '波洛'],
+    collocations: ['aroused in the public', 'in view of', 'so far as', 'make the acquaintance of', 'in the quiet of', 'involved in'],
     quotes: [
-      'The dust is the first thing you learn to hate on Mars.'
+      'I little thought, as I travelled down to Styles that summer afternoon, that within a few short weeks I should find myself involved in one of the most puzzling and sensational murder cases of the century.'
     ],
     body: [
-      'The dust is the first thing you learn to hate on Mars. It gets into everything—your suit joints, your air filters, your lungs if you are unlucky. On sol forty-one, I decided I hated the dust more than the cold, and I started keeping a log to stay sane.',
-      'My name is Lin Chen, and as of this morning, I am the only human being on this planet. The Hermes left orbit at 06:12. I watched its engines burn from the Hab window until it was just another star, and then I watched the dust rise again.',
-      'The mission brief called it a "contained anomaly." Six people came down. Five went up. I stayed, because somebody had to stay, and the lottery of bad luck had my name on it.',
-      'So here is the math. Food: three hundred and forty-one sols, if I ration hard. Oxygen: fine, the generator is holding. Water: I can recycle, but the electrolysis unit has a fault I need to fix before sol sixty. Sanity: currently the scarcest resource of all.',
-      'Step one, survive. Step two, signal. Step three, do not think about home—because thinking about home is how you lose a whole day staring at a wall.',
-      'I will fix the rover tomorrow. Tonight, I will write. If someone ever reads this, know that I did not go quietly.'
+      'The intense interest aroused in the public by what was known at the time as "The Styles Case" has now somewhat subsided. Nevertheless, in view of the world-wide notoriety which attended it, I have been asked, both by my friend Poirot and the family themselves, to write an account of the whole story.',
+      'This, we trust, will effectually silence the sensational rumours which still persist. I will therefore set down here the facts of the matter, so far as they are known to me, simply and without prejudice, for I am but a plain man, and have no desire to pose as a literary man.',
+      'The scene of the tragedy was Styles Court, in the county of Essex, a fine old country house which had been the home of the Cavendish family for many generations.',
+      'I first made the acquaintance of the Cavendish family in the early summer of 1916. I was invalided home from the Front, and after a spell in a convalescent home, my old friend John Cavendish suggested that I should pay them a visit and complete my recovery in the quiet of the countryside.',
+      'It was a most welcome invitation. The life at the Front had left me restless and unstrung, and the prospect of some weeks of quiet, in the company of old friends, was very pleasant to me.',
+      'I little thought, as I travelled down to Styles that summer afternoon, that within a few short weeks I should find myself involved in one of the most puzzling and sensational murder cases of the century.'
     ],
     bodyCn: [
-      '在火星上，你最先学会恨的是尘埃。它无孔不入——钻进你的宇航服接缝、空气过滤器，倒霉的话还会钻进你的肺。第四十一个火星日那天，我认定自己恨尘埃胜过恨严寒，于是开始写日志，好让自己不至于发疯。',
-      '我叫林晨。从今天早上起，我是这个星球上唯一的人类。赫尔墨斯号于 06:12 离开轨道。我从居住舱的窗子望着它的尾焰，直到它变成又一颗星星，然后我又看见尘埃重新升起。',
-      '任务简报把这称作"可控异常"。六个人下来，五个人上去。我留了下来，因为总得有人留下，而厄运的抽签恰好抽中了我。',
-      '那么来算一笔账。食物：如果严格配给，能撑三百四十一个火星日。氧气：没问题，发电机还在运转。水：可以循环利用，但电解装置有个故障，必须在第六十个火星日之前修好。至于理智——眼下才是最稀缺的资源。',
-      '第一步，活下去。第二步，发信号。第三步，别想家——因为想家会让你对着墙发呆，一整天就没了。',
-      '明天我会去修火星车。今晚，我要写点东西。如果将来有人读到这些，请记住：我没有悄无声息地离开。'
+      '当年轰动一时的"斯泰尔斯庄园案"，如今公众的兴趣已有所消退。然而，鉴于该案曾举世闻名，我的朋友波洛以及当事人一家都请我写下整个故事的经过。',
+      '我们相信，此举能有效地平息那些仍在流传的耸人听闻的谣言。因此，我将在此如实记下我所知的案情，简单客观、不加偏颇——因为我只是个普通人，无意以文人自居。',
+      '悲剧的发生地是埃塞克斯郡的斯泰尔斯庄园，一座精美的乡间老宅，卡文迪什家族世世代代居住于此。',
+      '我与卡文迪什一家相识，是在1916年初夏。我从前线负伤归国，在一处疗养院住了一段时间后，老朋友约翰·卡文迪什邀我去他家小住，在乡间的宁静中完成康复。',
+      '这份邀请最受欢迎不过。前线的生活让我心神不宁、坐卧不安，而能在老友陪伴下安安静静地休养几周，实在令人向往。',
+      '那年夏天，我乘车前往斯泰尔斯庄园时，绝未想到，短短数周之后，自己竟会卷入本世纪最扑朔迷离、最耸人听闻的一桩谋杀案。'
     ]
   }
 ];
