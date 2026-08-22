@@ -175,6 +175,13 @@ a{color:var(--accent);text-decoration:none}
 .bnpos{font-size:12px;color:var(--muted)}
 .tts{border:1px solid var(--accent);background:transparent;color:var(--accent);padding:4px 10px;border-radius:14px;cursor:pointer;font-size:12px;font-weight:600;margin-left:6px}
 .tts:hover{background:var(--accent);color:#fff}
+.uploadbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 4px;padding:12px 14px;background:var(--soft);border-radius:14px}
+.upbtn{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:9px 16px;border-radius:18px;cursor:pointer;font-size:14px;font-weight:600}
+.upbtn:hover{opacity:.9}
+.uplab{font-size:12px;color:var(--muted)}
+.bh{font-size:15px;margin:18px 0 8px;color:var(--muted);font-weight:700}
+.chbtn.del{border-color:transparent;color:var(--muted)}
+.chbtn.del:hover{color:#c0392b;border-color:#c0392b}
 @media(max-width:720px){.hero{grid-template-columns:1fr}.lead h2{font-size:24px}.article{font-size:17px}.brand{font-size:24px}}
 /* ---- 学习中心 / 流利说式闭环 ---- */
 .ll-head{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,var(--accent),#7a2a1e);color:#fff;border-radius:16px;padding:16px 20px;margin:14px 0;box-shadow:var(--shadow)}
@@ -297,6 +304,7 @@ a{color:var(--accent);text-decoration:none}
 <!-- SETTINGS -->
 <div class="view hidden" id="settingsView"></div>
 
+<script src="fflate.min.js"></script>
 <script>
 /* ============ 数据层 ============ */
 let ARTICLES=[], BOOKS=[], DICT={}, CUR=null, MODE='both';
@@ -457,6 +465,56 @@ function renderBody(a){
   });
   return html;
 }
+/* ---------- EPUB 上传 + 本地书架（Glose 式） ---------- */
+let _db=null, EPUB_CTX=null;
+function idb(){ return new Promise((res,rej)=>{ if(_db)return res(_db); if(!('indexedDB' in window))return rej(new Error('no idb')); const r=indexedDB.open('lumina-books',1); r.onupgradeneeded=e=>{const d=e.target.result; if(!d.objectStoreNames.contains('books')) d.createObjectStore('books',{keyPath:'bookId'});}; r.onsuccess=e=>{_db=e.target.result;res(_db);}; r.onerror=()=>rej(r.error); }); }
+function idbPut(v){ return idb().then(db=>new Promise((res,rej)=>{ const tx=db.transaction('books','readwrite'); tx.objectStore('books').put(v); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); })); }
+function idbGetAll(){ return idb().then(db=>new Promise((res,rej)=>{ const rq=db.transaction('books','readonly').objectStore('books').getAll(); rq.onsuccess=()=>res(rq.result||[]); rq.onerror=()=>rej(rq.error); })); }
+function idbDel(id){ return idb().then(db=>new Promise((res,rej)=>{ const tx=db.transaction('books','readwrite'); tx.objectStore('books').delete(id); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); })); }
+function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return Math.abs(h).toString(36); }
+function epubText(el){ return (el.textContent||'').replace(/\s+/g,' ').trim(); }
+async function parseEpub(file){
+  const buf = await file.arrayBuffer();
+  const zip = window.fflate.unzipSync(new Uint8Array(buf));
+  const get = (p)=> zip[p] ? window.fflate.strFromU8(zip[p]) : '';
+  const container = get('META-INF/container.xml');
+  const cdoc = new DOMParser().parseFromString(container,'application/xml');
+  const rootfile = cdoc.querySelector('rootfile');
+  if(!rootfile) throw new Error('无效的 EPUB（缺少 rootfile）');
+  const opfPath = rootfile.getAttribute('full-path') || '';
+  const opf = new DOMParser().parseFromString(get(opfPath),'application/xml');
+  const baseDir = opfPath.includes('/') ? opfPath.slice(0,opfPath.lastIndexOf('/')+1) : '';
+  const title = opf.querySelector('metadata title') ? epubText(opf.querySelector('metadata title')) : file.name.replace(/\.epub$/i,'');
+  const author = opf.querySelector('metadata creator') ? epubText(opf.querySelector('metadata creator')) : '未知作者';
+  const manifest = {};
+  opf.querySelectorAll('manifest item').forEach(it=>{ const id=it.getAttribute('id'); const href=it.getAttribute('href'); if(id&&href) manifest[id]=href; });
+  const chapters = [];
+  opf.querySelectorAll('spine itemref').forEach(it=>{
+    const href = manifest[it.getAttribute('idref')];
+    if(!href) return;
+    const xhtml = get(baseDir+href);
+    if(!xhtml) return;
+    const d = new DOMParser().parseFromString(xhtml,'text/html');
+    const h = d.querySelector('h1,h2,h3,h4');
+    const chTitle = h ? epubText(h) : ('第'+(chapters.length+1)+'章');
+    const paras = [...d.querySelectorAll('p')].map(p=>epubText(p)).filter(t=>t.length>20);
+    if(paras.length) chapters.push({ title: chTitle, body: paras });
+  });
+  if(!chapters.length) throw new Error('未能从 EPUB 提取到章节文本');
+  return { bookId:'epub-'+hashStr(file.name+'|'+file.size), title, titleCn:'', author, chapters };
+}
+async function uploadEpub(file){
+  const meta = await parseEpub(file);
+  await idbPut({ bookId:meta.bookId, title:meta.title, titleCn:'', author:meta.author, cover:'', chapters:meta.chapters, added:Date.now() });
+  return meta;
+}
+
+/* ---------- 阅读进度记忆 ---------- */
+const PROG_KEY='br_progress';
+function getProgress(){ try{ return JSON.parse(getLS(PROG_KEY)||'{}'); }catch(e){ return {}; } }
+function saveProgress(bookId, chapter, paraIdx){ const p=getProgress(); p[bookId]={ chapter, para:paraIdx||0, ts:Date.now() }; setLS(PROG_KEY, JSON.stringify(p)); }
+function progressOf(bookId){ const p=getProgress(); return p[bookId]||null; }
+
 /* ---------- 小说 ---------- */
 function bookGroups(){
   const groups=new Map();
@@ -468,26 +526,65 @@ function bookGroups(){
   groups.forEach(g=>g.chapters.sort((a,b)=>(a.chapter||0)-(b.chapter||0)));
   return [...groups.values()];
 }
-function renderBooks(){
+async function renderBooks(){
   const el=document.getElementById('booksView');
   const groups=bookGroups();
-  if(!groups.length){ el.innerHTML=`<h2>📚 经典小说 · 双语阅读</h2><div class="hint">暂无小说内容。可在 GitHub Actions 跑一次采集，或本地运行 <code>node ingest.js</code> 生成 books.json。</div>`; return; }
-  el.innerHTML=`<h2>📚 经典小说 · 双语阅读 <small style="color:var(--muted);font-size:13px">公版原著 · 逐章更新</small></h2>
-    <div class="bgrid">${groups.map(g=>`
-      <div class="bcard">
+  let upbooks=[]; try{ upbooks=await idbGetAll(); }catch(e){ upbooks=[]; }
+  let html=`<h2>📚 我的书架 <small style="color:var(--muted);font-size:13px">公版原著 + 本地 EPUB · Glose 式</small></h2>
+    <div class="uploadbar">
+      <button class="upbtn" id="uploadBtn">📤 上传 EPUB 电子书</button>
+      <input type="file" id="epubFile" accept=".epub,application/epub+zip" hidden>
+      <small class="uplab">上传你已购买的 .epub（如《火星救援》），仅存本机、私密阅读</small>
+    </div>`;
+  if(upbooks.length){
+    html+=`<h3 class="bh">📤 本地上传</h3><div class="bgrid">${upbooks.map(up=>{
+      const prog=progressOf(up.bookId);
+      const cont=prog?`<button class="chbtn" data-epub="${up.bookId}" data-ch="${Math.max(0,prog.chapter-1)}">▶ 继续读第${prog.chapter}章</button>`:`<button class="chbtn" data-epub="${up.bookId}" data-ch="0">▶ 开始阅读</button>`;
+      return `<div class="bcard">
+        <div class="bcover">📖</div>
+        <div class="binfo">
+          <div class="btitle">${esc(up.title)}</div>
+          <div class="bcn">${esc(up.author||'')} · 共 ${up.chapters.length} 章</div>
+          <div class="bmeta">个人上传 · 仅存本机${prog?(' · 上次读到第'+prog.chapter+'章'):''}</div>
+          <div class="bchapters">${cont}<button class="chbtn del" data-del="${up.bookId}">🗑 移除</button></div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  if(groups.length){
+    html+=`<h3 class="bh">📚 经典公版</h3><div class="bgrid">${groups.map(g=>{
+      const prog=progressOf(g.bookId);
+      const cont=prog?`<button class="chbtn" data-id="${g.chapters[Math.min(Math.max(0,prog.chapter-1),g.chapters.length-1)].id}">▶ 继续读第${prog.chapter}章</button>`:'';
+      return `<div class="bcard">
         <div class="bcover">${g.cover?`<img src="${esc(g.cover)}" alt="" loading="lazy" onerror="this.style.display='none'">`:'📖'}</div>
         <div class="binfo">
           <div class="btitle">${esc(g.bookTitle)}</div>
           <div class="bcn">${esc(g.bookTitleCn||'')} · ${esc(g.author||'')}</div>
           <div class="bmeta">已收录 ${g.chapters.length} 章 · 公版</div>
-          <div class="bchapters">${g.chapters.map(c=>`<button class="chbtn" data-id="${c.id}">第${c.chapter}章</button>`).join('')}</div>
+          <div class="bchapters">${cont}${g.chapters.map(c=>`<button class="chbtn" data-id="${c.id}">第${c.chapter}章</button>`).join('')}</div>
         </div>
-      </div>`).join('')}
-    </div>`;
-  el.querySelectorAll('.chbtn').forEach(b=>b.onclick=()=>openBook(b.dataset.id));
+      </div>`;
+    }).join('')}</div>`;
+  }
+  if(!upbooks.length && !groups.length) html+=`<div class="hint">书架为空。可上传你的 EPUB，或在 GitHub Actions 跑一次采集生成公版书内容。</div>`;
+  el.innerHTML=html;
+  const upBtn=document.getElementById('uploadBtn'); const fInput=document.getElementById('epubFile');
+  if(upBtn) upBtn.onclick=()=>fInput.click();
+  if(fInput) fInput.onchange=e=>{ const f=e.target.files[0]; if(!f)return; uploadEpub(f).then(m=>{ flash('已导入《'+m.title+'》('+m.chapters.length+'章)'); renderBooks(); }).catch(err=>{ flash('导入失败：'+err.message); }); fInput.value=''; };
+  el.querySelectorAll('.chbtn[data-epub]').forEach(b=>b.onclick=()=>openEpubBook(b.dataset.epub, parseInt(b.dataset.ch)||0));
+  el.querySelectorAll('.chbtn[data-del]').forEach(b=>b.onclick=()=>{ idbDel(b.dataset.del).then(()=>renderBooks()); });
+  el.querySelectorAll('.chbtn[data-id]').forEach(b=>b.onclick=()=>openBook(b.dataset.id));
 }
 function openBook(id){ openArticle(id); }
 function bookNav(){
+  if(EPUB_CTX && CUR && CUR.bookId===EPUB_CTX.bookId){
+    const chapters=EPUB_CTX.chapters, idx=EPUB_CTX.idx;
+    return `<div class="booknav">
+      <button class="bprev" data-epub="1" data-ch="${idx-1}" ${idx>0?'':'disabled'}>← 上一章</button>
+      <span class="bnpos">第 ${idx+1} 章 / 共 ${chapters.length} 章</span>
+      <button class="bnext" data-epub="1" data-ch="${idx+1}" ${idx<chapters.length-1?'':'disabled'}>下一章 →</button>
+    </div>`;
+  }
   const list=BOOKS.filter(b=>b.bookId===CUR.bookId).sort((a,b)=>(a.chapter||0)-(b.chapter||0));
   const idx=list.findIndex(b=>b.id===CUR.id);
   const prev=idx>0?list[idx-1]:null;
@@ -516,8 +613,7 @@ function speakFull(){
   };
   step();
 }
-function openArticle(id){
-  CUR=ARTICLES.find(a=>a.id===id)||BOOKS.find(b=>b.id===id);if(!CUR)return;
+function renderReader(){
   const isBook=CUR.kind==='book';
   document.getElementById('reader').classList.add('open');
   document.getElementById('reader').scrollTop=0;
@@ -531,14 +627,63 @@ function openArticle(id){
      ${isBook?bookNav():''}
      <div class="dek">${esc(CUR.excerptCn||CUR.excerpt)}</div>
      <div class="mode-${MODE}" id="bodyWrap">${renderBody(CUR)}</div>`;
-  bindWords();setMode(MODE);markRead(id);openPanelTab('col');
+  bindWords();setMode(MODE);markRead(CUR.id);openPanelTab('col');
   const tts=document.getElementById('ttsBtn');if(tts)tts.onclick=speakFull;
-  document.querySelectorAll('.bprev').forEach(b=>b.onclick=()=>{const id2=b.dataset.id;if(id2)openBook(id2);});
-  document.querySelectorAll('.bnext').forEach(b=>b.onclick=()=>{const id2=b.dataset.id;if(id2)openBook(id2);});
-  // paragraph tools
+  document.querySelectorAll('.bprev').forEach(b=>b.onclick=()=>{
+    if(b.dataset.epub!=null && EPUB_CTX) openEpubBook(EPUB_CTX.bookId, parseInt(b.dataset.ch)||0);
+    else { const id2=b.dataset.id; if(id2)openBook(id2); }
+  });
+  document.querySelectorAll('.bnext').forEach(b=>b.onclick=()=>{
+    if(b.dataset.epub!=null && EPUB_CTX) openEpubBook(EPUB_CTX.bookId, parseInt(b.dataset.ch)||0);
+    else { const id2=b.dataset.id; if(id2)openBook(id2); }
+  });
+  setupHighlight();
+  if(isBook && CUR.bookId) saveProgress(CUR.bookId, CUR.chapter||1, 0);
   document.querySelectorAll('.tbtn').forEach(b=>b.onclick=(e)=>{e.stopPropagation();toggleParaCn(b.dataset.i);});
   document.querySelectorAll('.gbtn').forEach(b=>b.onclick=(e)=>{e.stopPropagation();openGrammar(b.dataset.i);});
 }
+function openArticle(id){
+  CUR=ARTICLES.find(a=>a.id===id)||BOOKS.find(b=>b.id===id);if(!CUR)return;
+  EPUB_CTX=null;
+  renderReader();
+}
+async function openEpubBook(bookId, chIdx){
+  let all=[]; try{ all=await idbGetAll(); }catch(e){}
+  const up=all.find(b=>b.bookId===bookId);
+  if(!up || !up.chapters.length) return;
+  chIdx=Math.max(0, Math.min(chIdx, up.chapters.length-1));
+  const ch=up.chapters[chIdx];
+  CUR={
+    id: bookId+'-ch'+(chIdx+1), kind:'book', bookId, bookTitle: up.title, bookTitleCn:'', author: up.author,
+    chapter: chIdx+1, chapterTitle: ch.title, chapterTitleCn: '第'+(chIdx+1)+'章',
+    source:'本地 EPUB', category:'book', level:'IELTS 7.5+', license:'个人上传 · 仅本机阅读',
+    sourceUrl:'', excerpt: ch.body[0]?ch.body[0].slice(0,160):'', excerptCn:'',
+    readingMin: Math.max(3, Math.round(ch.body.join(' ').split(/\s+/).length/180)),
+    tags:['EPUB'], collocations:[], quotes:[], body: ch.body, bodyCn: [], date:''
+  };
+  EPUB_CTX={ bookId, chapters: up.chapters, idx: chIdx };
+  renderReader();
+}
+/* 划线收藏 */
+let hlBtn=null;
+function setupHighlight(){
+  const wrap=document.getElementById('bodyWrap'); if(!wrap) return;
+  wrap.onmouseup=(e)=>{
+    const sel=window.getSelection(); const text=sel?sel.toString().trim():'';
+    if(text.length<10) return;
+    showHlBtn(e.clientX, e.clientY, text);
+  };
+}
+function showHlBtn(x,y,text){
+  removeHlBtn();
+  hlBtn=document.createElement('button');
+  hlBtn.textContent='✏️ 划线收藏';
+  hlBtn.style.cssText=`position:fixed;left:${x}px;top:${y}px;z-index:99;background:var(--ink);color:var(--bg);border:none;padding:6px 12px;border-radius:16px;font-size:12px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25)`;
+  hlBtn.onclick=(ev)=>{ ev.stopPropagation(); addQuoteCollect(text, ''); removeHlBtn(); if(window.getSelection) window.getSelection().removeAllRanges(); };
+  document.body.appendChild(hlBtn);
+  setTimeout(removeHlBtn, 3200);
+}
+function removeHlBtn(){ if(hlBtn){ hlBtn.remove(); hlBtn=null; } }
 function bindWords(){
   const wrap=document.getElementById('bodyWrap');
   wrap.innerHTML=renderBody(CUR);
