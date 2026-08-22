@@ -1,0 +1,31 @@
+name: Daily Foreign-Press Ingest
+on:
+  schedule:
+    - cron: '0 22 * * *'   # 每天 06:00 北京时间的 UTC 前移 8h；按需调整
+  workflow_dispatch: {}     # 允许手动触发
+permissions:
+  contents: write
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Run ingest
+        env:
+          BAIDU_APPID: ${{ secrets.BAIDU_APPID }}
+          BAIDU_KEY: ${{ secrets.BAIDU_KEY }}
+          MAX_PER_FEED: '6'
+        run: node ingest.js
+      - name: Commit articles.json
+        run: |
+          git config user.name "DailyReader Bot"
+          git config user.email "bot@dailyreader.local"
+          if [ -n "$(git status --porcelain articles.json)" ]; then
+            git add articles.json
+            git commit -m "chore: daily ingest $(date -u +%F)"
+            git push
+          else
+            echo "no changes"
+          fi
