@@ -1,0 +1,14 @@
+{
+  "name": "LUMINA · 双语外刊每日精读",
+  "short_name": "LUMINA",
+  "description": "免费双语外刊阅读器：杂志级设计、多源聚合、沉浸式阅读、点词翻译、搭配金句与间隔复习。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f4ee",
+  "theme_color": "#8a1f1f",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
