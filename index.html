@@ -156,6 +156,25 @@ a{color:var(--accent);text-decoration:none}
 .seg2{display:flex;gap:6px;flex-wrap:wrap}
 .seg2 button{border:1px solid var(--line);background:var(--panel);padding:7px 14px;border-radius:16px;cursor:pointer;font-size:13px;color:var(--muted)}
 .seg2 button.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+/* ---- 小说 ---- */
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:6px}
+.bcard{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+.bcover{width:72px;height:104px;border-radius:8px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;flex:0 0 auto}
+.bcover img{width:100%;height:100%;object-fit:cover}
+.binfo{flex:1;min-width:0}
+.btitle{font-family:var(--serif);font-size:19px;font-weight:700}
+.bcn{font-size:13px;color:var(--muted);margin:4px 0}
+.bmeta{font-size:12px;color:var(--muted);margin-bottom:8px}
+.bchapters{display:flex;gap:6px;flex-wrap:wrap}
+.chbtn{border:1px solid var(--line);background:var(--panel);padding:5px 11px;border-radius:14px;cursor:pointer;font-size:12px;color:var(--ink)}
+.chbtn:hover{border-color:var(--accent);color:var(--accent)}
+.chap{font-family:var(--serif);font-size:15px;color:var(--muted);margin-top:-6px;margin-bottom:10px}
+.booknav{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--soft);border-radius:12px;padding:10px 14px;margin:12px 0}
+.booknav button{border:1px solid var(--line);background:var(--card);padding:7px 14px;border-radius:16px;cursor:pointer;font-size:13px;color:var(--accent);font-weight:600}
+.booknav button:disabled{opacity:.4;cursor:not-allowed}
+.bnpos{font-size:12px;color:var(--muted)}
+.tts{border:1px solid var(--accent);background:transparent;color:var(--accent);padding:4px 10px;border-radius:14px;cursor:pointer;font-size:12px;font-weight:600;margin-left:6px}
+.tts:hover{background:var(--accent);color:#fff}
 @media(max-width:720px){.hero{grid-template-columns:1fr}.lead h2{font-size:24px}.article{font-size:17px}.brand{font-size:24px}}
 /* ---- 学习中心 / 流利说式闭环 ---- */
 .ll-head{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,var(--accent),#7a2a1e);color:#fff;border-radius:16px;padding:16px 20px;margin:14px 0;box-shadow:var(--shadow)}
@@ -215,6 +234,7 @@ a{color:var(--accent);text-decoration:none}
   </div>
   <nav class="nav">
     <button data-view="home" class="on">首页</button>
+    <button data-view="books">小说</button>
     <button data-view="learn">学习中心</button>
     <button data-view="vocab">单词本</button>
     <button data-view="settings">设置</button>
@@ -270,6 +290,8 @@ a{color:var(--accent);text-decoration:none}
 
 <!-- LEARN -->
 <div class="view hidden" id="learnView"></div>
+<!-- BOOKS -->
+<div class="view hidden" id="booksView"></div>
 <!-- VOCAB -->
 <div class="view hidden" id="vocabView"></div>
 <!-- SETTINGS -->
@@ -277,9 +299,9 @@ a{color:var(--accent);text-decoration:none}
 
 <script>
 /* ============ 数据层 ============ */
-let ARTICLES=[], DICT={}, CUR=null, MODE='both';
+let ARTICLES=[], BOOKS=[], DICT={}, CUR=null, MODE='both';
 let curSrc='ALL', curCat='all', curQ='';
-const LS={ data:'br_dataurl', vocab:'br_vocab', streak:'br_streak', read:'br_read', theme:'br_theme', font:'br_font', daily:'br_daily', goal:'br_goal', ll:'br_ll', sent:'br_sent' };
+const LS={ data:'br_dataurl', booksurl:'br_booksurl', vocab:'br_vocab', streak:'br_streak', read:'br_read', theme:'br_theme', font:'br_font', daily:'br_daily', goal:'br_goal', ll:'br_ll', sent:'br_sent' };
 function getLS(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function setLS(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 
@@ -296,6 +318,10 @@ async function loadDict(){
   try{ const r=await fetch('dict.min.json',{cache:'no-store'}); if(r.ok) DICT=await r.json(); }catch(e){}
   try{ const r=await fetch('dict.api.json',{cache:'no-store'}); if(r.ok) DICT=Object.assign({},DICT,await r.json()); }catch(e){}
   try{ const r=await fetch('dict.json',{cache:'no-store'}); if(r.ok) DICT=Object.assign({},DICT,await r.json()); }catch(e){}
+}
+async function loadBooksData(){
+  const url=getLS(LS.booksurl)||'books.json';
+  try{ const r=await fetch(url,{cache:'no-store'}); if(r.ok) BOOKS=await r.json(); }catch(e){ try{BOOKS=await (await fetch('books.json')).json();}catch(_){BOOKS=[];} }
 }
 
 /* ============ 日期 ============ */
@@ -431,19 +457,84 @@ function renderBody(a){
   });
   return html;
 }
+/* ---------- 小说 ---------- */
+function bookGroups(){
+  const groups=new Map();
+  BOOKS.forEach(b=>{
+    if(!b.bookId)return;
+    if(!groups.has(b.bookId)) groups.set(b.bookId,{bookId:b.bookId,bookTitle:b.bookTitle,bookTitleCn:b.bookTitleCn,author:b.author,cover:b.cover,sourceUrl:b.sourceUrl,chapters:[]});
+    groups.get(b.bookId).chapters.push(b);
+  });
+  groups.forEach(g=>g.chapters.sort((a,b)=>(a.chapter||0)-(b.chapter||0)));
+  return [...groups.values()];
+}
+function renderBooks(){
+  const el=document.getElementById('booksView');
+  const groups=bookGroups();
+  if(!groups.length){ el.innerHTML=`<h2>📚 经典小说 · 双语阅读</h2><div class="hint">暂无小说内容。可在 GitHub Actions 跑一次采集，或本地运行 <code>node ingest.js</code> 生成 books.json。</div>`; return; }
+  el.innerHTML=`<h2>📚 经典小说 · 双语阅读 <small style="color:var(--muted);font-size:13px">公版原著 · 逐章更新</small></h2>
+    <div class="bgrid">${groups.map(g=>`
+      <div class="bcard">
+        <div class="bcover">${g.cover?`<img src="${esc(g.cover)}" alt="" loading="lazy" onerror="this.style.display='none'">`:'📖'}</div>
+        <div class="binfo">
+          <div class="btitle">${esc(g.bookTitle)}</div>
+          <div class="bcn">${esc(g.bookTitleCn||'')} · ${esc(g.author||'')}</div>
+          <div class="bmeta">已收录 ${g.chapters.length} 章 · 公版</div>
+          <div class="bchapters">${g.chapters.map(c=>`<button class="chbtn" data-id="${c.id}">第${c.chapter}章</button>`).join('')}</div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  el.querySelectorAll('.chbtn').forEach(b=>b.onclick=()=>openBook(b.dataset.id));
+}
+function openBook(id){ openArticle(id); }
+function bookNav(){
+  const list=BOOKS.filter(b=>b.bookId===CUR.bookId).sort((a,b)=>(a.chapter||0)-(b.chapter||0));
+  const idx=list.findIndex(b=>b.id===CUR.id);
+  const prev=idx>0?list[idx-1]:null;
+  const next=idx>=0&&idx<list.length-1?list[idx+1]:null;
+  return `<div class="booknav">
+    <button class="bprev" data-id="${prev?prev.id:''}" ${prev?'':'disabled'}>← 上一章</button>
+    <span class="bnpos">第 ${CUR.chapter} 章 / 共 ${list.length} 章</span>
+    <button class="bnext" data-id="${next?next.id:''}" ${next?'':'disabled'}>下一章 →</button>
+  </div>`;
+}
+let speaking=false;
+function speakFull(){
+  if(!CUR)return;
+  const btn=document.getElementById('ttsBtn');
+  if(speaking){ if('speechSynthesis' in window) speechSynthesis.cancel(); speaking=false; if(btn)btn.textContent='🔊 朗读全文'; return; }
+  const paras=(CUR.body||[]).filter(p=>p&&p.trim());
+  if(!paras.length)return;
+  speaking=true; if(btn)btn.textContent='⏹ 停止朗读';
+  let i=0;
+  const step=()=>{
+    if(i>=paras.length||!speaking){ speaking=false; if(btn)btn.textContent='🔊 朗读全文'; return; }
+    const u=new SpeechSynthesisUtterance(paras[i]);
+    u.lang='en-US'; u.rate=0.92;
+    u.onend=step; u.onerror=step; i++;
+    speechSynthesis.speak(u);
+  };
+  step();
+}
 function openArticle(id){
-  CUR=ARTICLES.find(a=>a.id===id);if(!CUR)return;
+  CUR=ARTICLES.find(a=>a.id===id)||BOOKS.find(b=>b.id===id);if(!CUR)return;
+  const isBook=CUR.kind==='book';
   document.getElementById('reader').classList.add('open');
   document.getElementById('reader').scrollTop=0;
   applyFont();
+  const subtitle=isBook?`《${esc(CUR.bookTitleCn||'')}》${esc(CUR.author||'')}`:(CUR.byline?('By '+esc(CUR.byline)):'');
   document.getElementById('article').innerHTML=
-    `<div class="kicker">${CUR.source} · ${catName(CUR.category)}</div>
-     <h1>${esc(CUR.title)}</h1>
-     <div class="byline">${CUR.byline?('By '+esc(CUR.byline)):''}${(CUR.sourceUrl||CUR.url)?` · <a href="${esc(CUR.sourceUrl||CUR.url)}" target="_blank" rel="noopener">查看原文 ↗</a>`:''}</div>
-     <div class="meta"><span>${CUR.level}</span><span>${CUR.readingMin||CUR.min} 分钟阅读</span><span>${CUR.date}</span><span>${CUR.license?'来源许可：'+esc(CUR.license):''}</span></div>
+    `<div class="kicker">${CUR.source} · ${isBook?'经典小说':catName(CUR.category)}${isBook?(' · 第'+CUR.chapter+'章'):''}</div>
+     ${isBook?`<h1>${esc(CUR.bookTitle)}</h1><div class="chap">${esc(CUR.chapterTitleCn||'')} ${esc(CUR.chapterTitle||'')}</div>`:`<h1>${esc(CUR.title)}</h1>`}
+     <div class="byline">${subtitle}${(CUR.sourceUrl||CUR.url)?` · <a href="${esc(CUR.sourceUrl||CUR.url)}" target="_blank" rel="noopener">查看原文 ↗</a>`:''}</div>
+     <div class="meta"><span>${CUR.level}</span><span>${CUR.readingMin||CUR.min} 分钟阅读</span><span>${CUR.date}</span><span>${CUR.license?'来源许可：'+esc(CUR.license):''}</span><button id="ttsBtn" class="tts" title="全文朗读">🔊 朗读全文</button></div>
+     ${isBook?bookNav():''}
      <div class="dek">${esc(CUR.excerptCn||CUR.excerpt)}</div>
      <div class="mode-${MODE}" id="bodyWrap">${renderBody(CUR)}</div>`;
   bindWords();setMode(MODE);markRead(id);openPanelTab('col');
+  const tts=document.getElementById('ttsBtn');if(tts)tts.onclick=speakFull;
+  document.querySelectorAll('.bprev').forEach(b=>b.onclick=()=>{const id2=b.dataset.id;if(id2)openBook(id2);});
+  document.querySelectorAll('.bnext').forEach(b=>b.onclick=()=>{const id2=b.dataset.id;if(id2)openBook(id2);});
   // paragraph tools
   document.querySelectorAll('.tbtn').forEach(b=>b.onclick=(e)=>{e.stopPropagation();toggleParaCn(b.dataset.i);});
   document.querySelectorAll('.gbtn').forEach(b=>b.onclick=(e)=>{e.stopPropagation();openGrammar(b.dataset.i);});
@@ -914,10 +1005,12 @@ function flash(msg){const d=document.createElement('div');d.textContent=msg;d.st
 /* ============ 视图切换 ============ */
 function showView(v){
   document.getElementById('homeView').classList.toggle('hidden',v!=='home');
+  document.getElementById('booksView').classList.toggle('hidden',v!=='books');
   document.getElementById('learnView').classList.toggle('hidden',v!=='learn');
   document.getElementById('vocabView').classList.toggle('hidden',v!=='vocab');
   document.getElementById('settingsView').classList.toggle('hidden',v!=='settings');
   document.querySelectorAll('.nav button[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+  if(v==='books')renderBooks();
   if(v==='learn')renderLearn();if(v==='vocab')renderVocab();if(v==='settings')renderSettings();
   if(v!=='home')document.getElementById('reader').classList.remove('open');
 }
@@ -932,7 +1025,7 @@ document.getElementById('reader').addEventListener('scroll',e=>{
 async function init(){
   document.getElementById('todayDate').textContent=fmtDate();
   applyTheme();
-  await Promise.all([loadData(),loadDict()]);
+  await Promise.all([loadData(),loadDict(),loadBooksData()]);
   renderRail();renderCats();renderDaily();renderHome();
   document.getElementById('search').oninput=e=>{curQ=e.target.value;renderHome();};
   document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>showView(b.dataset.view));
