@@ -182,6 +182,39 @@ a{color:var(--accent);text-decoration:none}
 .bh{font-size:15px;margin:18px 0 8px;color:var(--muted);font-weight:700}
 .chbtn.del{border-color:transparent;color:var(--muted)}
 .chbtn.del:hover{color:#c0392b;border-color:#c0392b}
+.epub-help{margin:8px 0 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 14px;box-shadow:var(--shadow)}
+.epub-help summary{cursor:pointer;padding:12px 0;font-size:14px;font-weight:700;list-style:none;display:flex;align-items:center;gap:6px}
+.epub-help summary::-webkit-details-marker{display:none}
+.epub-help[open] summary{padding-bottom:6px}
+.epub-help ol{margin:6px 0 10px 20px;line-height:1.7;font-size:13px;color:var(--ink)}
+.epub-help ol b{color:var(--accent)}
+.epub-help p{margin:4px 0 12px;font-size:12px;color:var(--muted)}
+.transbar{display:flex;align-items:center;gap:10px;margin:10px 0;padding:10px 14px;background:var(--soft);border-radius:12px}
+.transbar button{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:7px 14px;border-radius:16px;cursor:pointer;font-size:13px;font-weight:600}
+.transbar button:disabled{opacity:.6;cursor:not-allowed}
+.transprog{font-size:12px;color:var(--muted)}
+.note-actions{margin:10px 0}
+.notes-list{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.note-card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.note-text{font-family:var(--serif);font-size:15px;line-height:1.6;color:var(--ink)}
+.note-cn{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:13.5px;line-height:1.7;color:var(--muted);margin-top:6px;padding-left:2px}
+.note-meta{font-size:12px;color:var(--muted);margin:6px 0 4px}
+.note-note{font-size:13px;color:var(--ink);background:var(--soft);border-radius:8px;padding:8px 10px;margin:6px 0}
+.note-empty{color:var(--muted);font-style:italic}
+.note-btns{display:flex;gap:8px;margin-top:8px}
+.nb{border:1px solid var(--line);background:var(--panel);padding:5px 12px;border-radius:14px;cursor:pointer;font-size:12px;color:var(--ink)}
+.nb:hover{border-color:var(--accent);color:var(--accent)}
+.nb.del:hover{color:#c0392b;border-color:#c0392b}
+.linklike{border:none;background:transparent;color:var(--accent);font-weight:600;cursor:pointer;padding:0 2px;text-decoration:underline}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(2px)}
+.modal-card{background:var(--card);border-radius:16px;padding:16px;max-width:92vw;max-height:90vh;overflow:auto;box-shadow:0 12px 48px rgba(0,0,0,.35)}
+.mc-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:10px}
+.mc-close{border:none;background:transparent;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+.modal-card img{width:100%;max-width:440px;display:block;margin:0 auto;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.mc-acts{display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+.mc-acts button,.mc-acts a{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:9px 18px;border-radius:18px;cursor:pointer;font-size:13px;text-decoration:none;font-weight:600}
+.mc-acts a.ghost,.mc-acts button.ghost{background:transparent;color:var(--accent)}
+.mc-hint{margin-top:10px;text-align:center;font-size:12px;color:var(--muted)}
 @media(max-width:720px){.hero{grid-template-columns:1fr}.lead h2{font-size:24px}.article{font-size:17px}.brand{font-size:24px}}
 /* ---- 学习中心 / 流利说式闭环 ---- */
 .ll-head{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,var(--accent),#7a2a1e);color:#fff;border-radius:16px;padding:16px 20px;margin:14px 0;box-shadow:var(--shadow)}
@@ -243,6 +276,7 @@ a{color:var(--accent);text-decoration:none}
     <button data-view="home" class="on">首页</button>
     <button data-view="books">小说</button>
     <button data-view="learn">学习中心</button>
+    <button data-view="notes">笔记</button>
     <button data-view="vocab">单词本</button>
     <button data-view="settings">设置</button>
     <span class="grow"><button class="install" id="installBtn">安装 App</button></span>
@@ -297,6 +331,8 @@ a{color:var(--accent);text-decoration:none}
 
 <!-- LEARN -->
 <div class="view hidden" id="learnView"></div>
+<!-- NOTES -->
+<div class="view hidden" id="notesView"></div>
 <!-- BOOKS -->
 <div class="view hidden" id="booksView"></div>
 <!-- VOCAB -->
@@ -309,7 +345,7 @@ a{color:var(--accent);text-decoration:none}
 /* ============ 数据层 ============ */
 let ARTICLES=[], BOOKS=[], DICT={}, CUR=null, MODE='both';
 let curSrc='ALL', curCat='all', curQ='';
-const LS={ data:'br_dataurl', booksurl:'br_booksurl', vocab:'br_vocab', streak:'br_streak', read:'br_read', theme:'br_theme', font:'br_font', daily:'br_daily', goal:'br_goal', ll:'br_ll', sent:'br_sent' };
+const LS={ data:'br_dataurl', booksurl:'br_booksurl', vocab:'br_vocab', streak:'br_streak', read:'br_read', theme:'br_theme', font:'br_font', daily:'br_daily', goal:'br_goal', ll:'br_ll', sent:'br_sent', notes:'br_notes' };
 function getLS(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function setLS(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 
@@ -426,12 +462,17 @@ function renderHome(){
       <h2>${esc(feat.title)}</h2>
       <div class="dek">${esc(feat.excerptCn||feat.excerpt)}</div>
       <div class="meta"><span>${metaLine(feat)}</span>${feat.byline?`<span>By ${esc(feat.byline)}</span>`:''}</div>
-      <button class="readbtn" data-id="${feat.id}">阅读全文 →</button>
     </div>
     <div class="side">${sideItems.map(s=>`<div class="mini" data-id="${s.id}"><div class="k">${s.source}</div><div class="t">${esc(s.titleCn||s.title)}</div></div>`).join('')}</div>`;
-  grid.innerHTML=rest.slice(3).map(a=>cardHTML(a)).join('');
-  if(rest.length<=3) grid.innerHTML=rest.map(a=>cardHTML(a)).join('');
+  if(rest.length===0){
+    grid.innerHTML=`<div class="hint">当前分类「<b>${esc(catName(curCat))}</b>」只有 1 篇。点 <button class="linklike" onclick="curCat='all';renderCats();renderHome();">「全部」</button> 查看全部文章。</div>`;
+  } else {
+    grid.innerHTML=rest.slice(3).map(a=>cardHTML(a)).join('');
+    if(rest.length<=3) grid.innerHTML=rest.map(a=>cardHTML(a)).join('');
+  }
   hero.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openArticle(b.dataset.id));
+  // hero 整体可点（除 .side 区域）
+  hero.onclick=(e)=>{ if(e.target.closest('.side')) return; openArticle(feat.id); };
   grid.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openArticle(b.dataset.id));
 }
 function cardHTML(a){
@@ -456,7 +497,7 @@ function renderBody(a){
   let html='';const cols=a.collocations||[];
   a.body.forEach((en,i)=>{
     const cn=(a.bodyCn&&a.bodyCn[i])?a.bodyCn[i]:'';
-    html+=`<p class="para en" data-i="${i}">${highlightCollocations(en,cols)}<span class="ptool"><button class="tbtn" data-i="${i}">译</button><button class="gbtn" data-i="${i}">析</button></span></p>`;
+    html+=`<p class="para en" data-i="${i}">${highlightCollocations(en,cols)}<span class="ptool"><button class="tbtn" data-i="${i}">译</button><button class="gbtn" data-i="${i}">析</button><button class="hbtn" data-i="${i}" title="整段划线到笔记">✏️</button></span></p>`;
     if(cn&&cn.trim()) html+=`<p class="para cn" data-ci="${i}">${highlightCollocations(cn,cols)}</p>`;
   });
   (a.quotes||[]).forEach(q=>{
@@ -503,9 +544,16 @@ async function parseEpub(file){
   if(!chapters.length) throw new Error('未能从 EPUB 提取到章节文本');
   return { bookId:'epub-'+hashStr(file.name+'|'+file.size), title, titleCn:'', author, chapters };
 }
+function detectLang(text){
+  const cn=(text.match(/[\u4e00-\u9fff]/g)||[]).length;
+  const en=(text.match(/[a-zA-Z]/g)||[]).length;
+  return cn>en ? 'zh' : 'en';
+}
 async function uploadEpub(file){
   const meta = await parseEpub(file);
-  await idbPut({ bookId:meta.bookId, title:meta.title, titleCn:'', author:meta.author, cover:'', chapters:meta.chapters, added:Date.now() });
+  const sample = meta.chapters.slice(0,2).map(c=>c.body.join(' ')).join(' ');
+  const lang = detectLang(sample);
+  await idbPut({ bookId:meta.bookId, title:meta.title, titleCn:'', author:meta.author, cover:'', lang, chapters:meta.chapters, added:Date.now() });
   return meta;
 }
 
@@ -535,7 +583,16 @@ async function renderBooks(){
       <button class="upbtn" id="uploadBtn">📤 上传 EPUB 电子书</button>
       <input type="file" id="epubFile" accept=".epub,application/epub+zip" hidden>
       <small class="uplab">上传你已购买的 .epub（如《火星救援》），仅存本机、私密阅读</small>
-    </div>`;
+    </div>
+    <details class="epub-help"><summary>💡 如何把 iPhone「图书」App / Mac / 网盘 的 EPUB 导入这里？</summary>
+      <ol>
+        <li><b>从 iPhone「图书」App</b>：打开 EPUB → 点分享按钮 → 选「<b>存储到文件</b>」→ 选位置（iCloud Drive 或"我的 iPhone"下的文件夹）。</li>
+        <li><b>从 Mac</b>：AirDrop 发送 EPUB → iPhone 接收时选「存储到文件」。</li>
+        <li><b>从网盘 / 邮件 / Safari</b>：下载 EPUB → 选「存储到文件」。</li>
+        <li>回到本 App，点「📤 上传 EPUB」→ 在文件选择器里从刚保存的位置选即可。</li>
+      </ol>
+      <p><b>为什么？</b>iOS 的「图书」App 是隔离的沙盒，PWA 的文件选择器无法直接读取——必须先「存储到文件」App（Files）。同理，Android/桌面浏览器一般可直接选。</p>
+    </details>`;
   if(upbooks.length){
     html+=`<h3 class="bh">📤 本地上传</h3><div class="bgrid">${upbooks.map(up=>{
       const prog=progressOf(up.bookId);
@@ -596,6 +653,28 @@ function bookNav(){
   </div>`;
 }
 let speaking=false;
+let _voices=[];
+function loadVoices(){
+  try{ if('speechSynthesis' in window){ _voices=speechSynthesis.getVoices(); if(!_voices.length) speechSynthesis.onvoiceschanged=()=>{ _voices=speechSynthesis.getVoices(); }; } }catch(e){}
+}
+// 优先挑选系统里最自然的人声（Neural/Google/Siri 等），避免机械音
+function pickVoice(){
+  try{
+    if(!_voices.length && 'speechSynthesis' in window) _voices=speechSynthesis.getVoices();
+    const en=_voices.filter(v=>v.lang&&v.lang.toLowerCase().indexOf('en')===0);
+    if(!en.length) return null;
+    const prio=[
+      v=>/natural/i.test(v.name),
+      v=>/neural/i.test(v.name),
+      v=>/google/i.test(v.name),
+      v=>/samantha|aria|karen|jenny|ava|allison|susan|serena/i.test(v.name),
+      v=>/microsoft|online/i.test(v.name),
+      v=>/female|zira|hazel/i.test(v.name)
+    ];
+    for(const p of prio){ const hit=en.find(p); if(hit) return hit; }
+    return en.find(v=>v.lang==='en-US') || en[0];
+  }catch(e){ return null; }
+}
 function speakFull(){
   if(!CUR)return;
   const btn=document.getElementById('ttsBtn');
@@ -607,13 +686,17 @@ function speakFull(){
   const step=()=>{
     if(i>=paras.length||!speaking){ speaking=false; if(btn)btn.textContent='🔊 朗读全文'; return; }
     const u=new SpeechSynthesisUtterance(paras[i]);
-    u.lang='en-US'; u.rate=0.92;
+    const v=pickVoice(); if(v) u.voice=v;
+    u.lang='en-US'; u.rate=0.95; u.pitch=1;
     u.onend=step; u.onerror=step; i++;
     speechSynthesis.speak(u);
   };
   step();
 }
 function renderReader(){
+  if('speechSynthesis' in window){ try{ speechSynthesis.cancel(); }catch(e){} }
+  speaking=false;
+  const ttsOld=document.getElementById('ttsBtn'); if(ttsOld) ttsOld.textContent='🔊 朗读全文';
   const isBook=CUR.kind==='book';
   document.getElementById('reader').classList.add('open');
   document.getElementById('reader').scrollTop=0;
@@ -625,10 +708,12 @@ function renderReader(){
      <div class="byline">${subtitle}${(CUR.sourceUrl||CUR.url)?` · <a href="${esc(CUR.sourceUrl||CUR.url)}" target="_blank" rel="noopener">查看原文 ↗</a>`:''}</div>
      <div class="meta"><span>${CUR.level}</span><span>${CUR.readingMin||CUR.min} 分钟阅读</span><span>${CUR.date}</span><span>${CUR.license?'来源许可：'+esc(CUR.license):''}</span><button id="ttsBtn" class="tts" title="全文朗读">🔊 朗读全文</button></div>
      ${isBook?bookNav():''}
-     <div class="dek">${esc(CUR.excerptCn||CUR.excerpt)}</div>
+     ${isBook && CUR_TRANS ? `<div class="transbar"><button id="transBtn">🌐 翻译本章（${CUR_TRANS.from==='en'?'英→中':'中→英'}）</button><span class="transprog" id="transProgress"></span></div>` : ''}
+     <div class="dek" id="articleDek">${esc(MODE==='en' ? (CUR.excerpt||'') : (CUR.excerptCn||CUR.excerpt||''))}</div>
      <div class="mode-${MODE}" id="bodyWrap">${renderBody(CUR)}</div>`;
   bindWords();setMode(MODE);markRead(CUR.id);openPanelTab('col');
   const tts=document.getElementById('ttsBtn');if(tts)tts.onclick=speakFull;
+  const tb=document.getElementById('transBtn'); if(tb) tb.onclick=translateCurrentChapter;
   document.querySelectorAll('.bprev').forEach(b=>b.onclick=()=>{
     if(b.dataset.epub!=null && EPUB_CTX) openEpubBook(EPUB_CTX.bookId, parseInt(b.dataset.ch)||0);
     else { const id2=b.dataset.id; if(id2)openBook(id2); }
@@ -653,16 +738,62 @@ async function openEpubBook(bookId, chIdx){
   if(!up || !up.chapters.length) return;
   chIdx=Math.max(0, Math.min(chIdx, up.chapters.length-1));
   const ch=up.chapters[chIdx];
+  const lang = up.lang || detectLang(ch.body.join(' '));
+  const hasTrans = ch.translated && ch.translated.length===ch.body.length && ch.translated.every(t=>t&&t.trim());
+  let body, bodyCn;
+  if(lang==='zh'){ bodyCn = ch.body; body = hasTrans ? ch.translated : []; }
+  else { body = ch.body; bodyCn = hasTrans ? ch.translated : []; }
   CUR={
     id: bookId+'-ch'+(chIdx+1), kind:'book', bookId, bookTitle: up.title, bookTitleCn:'', author: up.author,
     chapter: chIdx+1, chapterTitle: ch.title, chapterTitleCn: '第'+(chIdx+1)+'章',
     source:'本地 EPUB', category:'book', level:'IELTS 7.5+', license:'个人上传 · 仅本机阅读',
-    sourceUrl:'', excerpt: ch.body[0]?ch.body[0].slice(0,160):'', excerptCn:'',
+    sourceUrl:'', excerpt: ch.body[0]?ch.body[0].slice(0,160):'', excerptCn: hasTrans?(ch.translated[0]?ch.translated[0].slice(0,160):''):'',
     readingMin: Math.max(3, Math.round(ch.body.join(' ').split(/\s+/).length/180)),
-    tags:['EPUB'], collocations:[], quotes:[], body: ch.body, bodyCn: [], date:''
+    tags:['EPUB'], collocations:[], quotes:[], body, bodyCn, date:''
   };
   EPUB_CTX={ bookId, chapters: up.chapters, idx: chIdx };
+  CUR_TRANS = hasTrans ? null : { bookId, chIdx, lang, from: lang==='en'?'en':'zh-CN', to: lang==='en'?'zh-CN':'en' };
   renderReader();
+  // 首次打开自动翻译本章（后台跑，完成后自动重开为双语）
+  if(CUR_TRANS){
+    setTimeout(()=>translateCurrentChapter().catch(e=>console.error('auto-translate:',e)), 250);
+  }
+}
+let CUR_TRANS=null;
+async function mymemoryTranslate(text, from, to){
+  const q=text.slice(0,480);
+  try{
+    const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${from}|${to}`);
+    const j=await r.json();
+    if(j.responseStatus===200 && j.responseData && j.responseData.translatedText){
+      let t=j.responseData.translatedText;
+      if(q.length < text.length) t += ' …';
+      return t;
+    }
+  }catch(e){}
+  return '';
+}
+async function translateCurrentChapter(){
+  if(!CUR_TRANS) return;
+  const { bookId, chIdx, from, to } = CUR_TRANS;
+  let all=[]; try{ all=await idbGetAll(); }catch(e){}
+  const up=all.find(b=>b.bookId===bookId); if(!up) return;
+  const ch=up.chapters[chIdx];
+  const btn=document.getElementById('transBtn'); const prog=document.getElementById('transProgress');
+  if(btn) btn.disabled=true;
+  if(prog) prog.textContent='准备翻译…';
+  const paras=ch.body;
+  const translated=[];
+  for(let i=0;i<paras.length;i++){
+    if(prog) prog.textContent=`翻译中 ${i+1}/${paras.length}…`;
+    const t=await mymemoryTranslate(paras[i], from, to);
+    translated.push(t);
+    if(i%3===2 || i===paras.length-1){ ch.translated=translated.concat(new Array(paras.length-i-1).fill('')); await idbPut(up); }
+  }
+  ch.translated=translated;
+  await idbPut(up);
+  flash('本章翻译完成 ✓');
+  openEpubBook(bookId, chIdx);
 }
 /* 划线收藏 */
 let hlBtn=null;
@@ -674,17 +805,246 @@ function setupHighlight(){
     showHlBtn(e.clientX, e.clientY, text);
   };
 }
+function getNotes(){ try{ return JSON.parse(getLS(LS.notes)||'[]'); }catch(e){ return []; } }
+function saveNotes(n){ setLS(LS.notes, JSON.stringify(n)); }
+function addNote(note){ const n=getNotes(); n.unshift(note); saveNotes(n); }
+// 段落级一键划线（无需拖选）
+function addSegmentHighlight(i){
+  const en=(CUR&&CUR.body||[])[i]||'';
+  const cn=(CUR&&CUR.bodyCn||[])[i]||'';
+  const text=en||cn;
+  if(!text||text.trim().length<10){ flash('段落太短，跳过'); return; }
+  const ctx=CUR||{};
+  addNote({ id:'n'+Date.now(), bookId:ctx.bookId||'', bookTitle:ctx.bookTitleCn||ctx.bookTitle||ctx.title||'', chapter:ctx.chapter||1, text:en, textCn:cn, note:'', ts:Date.now() });
+  flash('已整段划线（中英双语）到笔记 ✓');
+}
+// 一次性迁移：把"单词本"里 v14 之前的 quote（旧划线）搬到笔记，并补上书名
+function migrateVocabQuotes(){
+  if(getLS('br_notes_migrated')==='1') return;
+  try{
+    const v=JSON.parse(getLS(LS.vocab)||'[]');
+    const quotes=v.filter(x=>x.quote);
+    if(!quotes.length){ setLS('br_notes_migrated','1'); return; }
+    const notes=getNotes();
+    const existing=new Set(notes.map(n=>n.text));
+    let added=0;
+    quotes.forEach(q=>{
+      if(existing.has(q.word)) return;
+      let bookTitle='';
+      if(q.aid){
+        const a=ARTICLES.find(x=>x.id===q.aid);
+        const b=BOOKS.find(x=>x.id===q.aid);
+        bookTitle = a ? (a.source||'') : (b ? (b.bookTitleCn||b.bookTitle||'') : '');
+      }
+      notes.unshift({
+        id:'mig_'+q.added+'_'+Math.random().toString(36).slice(2,6),
+        bookId:q.aid||'',
+        bookTitle: bookTitle||'旧收藏（v14 之前）',
+        chapter:1,
+        text:q.word,
+        note:q.cn||'',
+        ts:q.added?new Date(q.added).getTime():Date.now()
+      });
+      added++;
+    });
+    if(added) saveNotes(notes);
+    setLS('br_notes_migrated','1');
+    if(added) flash('已迁移 '+added+' 条旧收藏到笔记');
+  }catch(e){ setLS('br_notes_migrated','1'); }
+}
 function showHlBtn(x,y,text){
   removeHlBtn();
   hlBtn=document.createElement('button');
   hlBtn.textContent='✏️ 划线收藏';
   hlBtn.style.cssText=`position:fixed;left:${x}px;top:${y}px;z-index:99;background:var(--ink);color:var(--bg);border:none;padding:6px 12px;border-radius:16px;font-size:12px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25)`;
-  hlBtn.onclick=(ev)=>{ ev.stopPropagation(); addQuoteCollect(text, ''); removeHlBtn(); if(window.getSelection) window.getSelection().removeAllRanges(); };
+  hlBtn.onclick=(ev)=>{
+    ev.stopPropagation();
+    const ctx = CUR || {};
+    addNote({
+      id:'n'+Date.now(), bookId:ctx.bookId||'', bookTitle:ctx.bookTitleCn||ctx.bookTitle||ctx.title||'',
+      chapter:ctx.chapter||1, text, note:'', ts:Date.now()
+    });
+    removeHlBtn(); if(window.getSelection) window.getSelection().removeAllRanges();
+    flash('已收藏到笔记，去「笔记」里加想法/分享');
+  };
   document.body.appendChild(hlBtn);
   setTimeout(removeHlBtn, 3200);
 }
 function removeHlBtn(){ if(hlBtn){ hlBtn.remove(); hlBtn=null; } }
+/* ---------- 笔记中心（划线 · 想法 · 分享）---------- */
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>flash('已复制到剪贴板，去粘贴分享吧')); }
+  else { const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); flash('已复制到剪贴板'); }catch(e){} ta.remove(); }
+}
+function buildTextCard(n){
+  return [
+    `《${n.bookTitle||'锋刊双语阅读'}》第${n.chapter||1}章`,
+    n.text ? `“${n.text}”` : '',
+    n.textCn ? `（${n.textCn}）` : '',
+    n.note ? `我的想法：${n.note}` : '',
+    '—— 锋刊 · 双语阅读'
+  ].filter(Boolean).join('\n');
+}
+// 用 Canvas 生成 Glose 风格分享卡片（图片）
+function buildShareCard(n){
+  return new Promise((resolve,reject)=>{
+    try{
+      const W=760, L=60, R=60, T=64;
+      const title=n.bookTitle||'锋刊双语阅读';
+      const chapter='第'+(n.chapter||1)+'章';
+      const quote=n.text||'';
+      const quoteCn=n.textCn||'';
+      const idea=n.note;
+      const m=document.createElement('canvas').getContext('2d');
+      function wrap(text,font,maxW){
+        m.font=font;
+        const s=String(text);
+        const hasCJK=/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/.test(s);
+        const lines=[]; let line='';
+        if(hasCJK){
+          // 中文按字符换行
+          for(const ch of s){
+            const t=line+ch;
+            if(m.measureText(t).width>maxW && line){ lines.push(line); line=ch; }
+            else line=t;
+          }
+          if(line) lines.push(line);
+        }else{
+          const words=s.split(/\s+/);
+          for(const w of words){
+            const t=line?line+' '+w:w;
+            if(m.measureText(t).width>maxW && line){ lines.push(line); line=w; }
+            else line=t;
+          }
+          if(line) lines.push(line);
+        }
+        return lines;
+      }
+      const quoteLines=wrap(quote,'bold 42px Georgia, "Times New Roman", serif', W-L-R-28);
+      const cnLines=quoteCn?wrap(quoteCn,'22px "PingFang SC","Microsoft YaHei","Heiti SC",sans-serif', W-L-R):[];
+      const ideaLines=idea?wrap(idea,'italic 24px Georgia, serif', W-L-R):[];
+      const H=T+46+34+quoteLines.length*58+(cnLines.length?cnLines.length*32+20:0)+50+(ideaLines.length?ideaLines.length*36+44:0)+110;
+      const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+      const c=cv.getContext('2d');
+      // 背景（米色纸感）
+      c.fillStyle='#faf6ee'; c.fillRect(0,0,W,H);
+      // 顶部金线
+      c.fillStyle='#b08d57'; c.fillRect(L,44,46,3);
+      // 书名+章节
+      c.fillStyle='#8a7a5c'; c.font='18px Georgia, serif';
+      c.fillText(title+' · '+chapter, L, 82);
+      // 左装饰竖条
+      const qTop=104;
+      c.fillStyle='#b08d57'; c.fillRect(L,qTop,4,quoteLines.length*58);
+      // 划线正文（英文）
+      c.fillStyle='#2b2620'; c.font='bold 42px Georgia, "Times New Roman", serif';
+      quoteLines.forEach((ln,i)=>{ c.fillText(ln, L+24, qTop+42+i*58); });
+      let y=qTop+quoteLines.length*58+26;
+      // 中文对照
+      if(cnLines.length){
+        c.fillStyle='#8a7a5c'; c.font='22px "PingFang SC","Microsoft YaHei","Heiti SC",sans-serif';
+        cnLines.forEach((ln,i)=>{ c.fillText(ln, L+24, y+i*32); });
+        y+=cnLines.length*32+20;
+      }
+      // 想法
+      y+=18;
+      if(ideaLines.length){
+        c.fillStyle='#a08a64'; c.font='italic 24px Georgia, serif';
+        ideaLines.forEach((ln,i)=>{ c.fillText('— '+ln, L, y+i*36); });
+        y+=ideaLines.length*36+30;
+      }
+      // 底部品牌
+      c.fillStyle='#b08d57'; c.font='16px Georgia, serif';
+      c.fillText('锋刊 · 双语阅读', L, H-44);
+      resolve(cv.toDataURL('image/png'));
+    }catch(e){ reject(e); }
+  });
+}
+function showCardModal(dataURL,n){
+  let m=document.getElementById('cardModal');
+  if(!m){
+    m=document.createElement('div'); m.id='cardModal'; m.className='modal';
+    m.innerHTML=`<div class="modal-card">
+      <div class="mc-head"><span>📤 分享阅读卡片</span><button class="mc-close" id="mcClose">×</button></div>
+      <img id="mcImg" alt="分享卡片">
+      <div class="mc-acts"><button id="mcDl">💾 保存图片</button><button id="mcCopy" class="ghost">📋 复制文字</button></div>
+      <div class="mc-hint">手机上也可<b>长按图片</b>直接「保存到相册」</div>
+    </div>`;
+    document.body.appendChild(m);
+    m.querySelector('#mcClose').onclick=()=>m.remove();
+    m.addEventListener('click',e=>{ if(e.target===m) m.remove(); });
+  }
+  m.querySelector('#mcImg').src=dataURL;
+  m.querySelector('#mcDl').onclick=()=>saveShareCard(dataURL);
+  m.querySelector('#mcCopy').onclick=()=>copyText(buildTextCard(n));
+  m.style.display='flex';
+}
+async function saveShareCard(dataURL){
+  try{
+    const blob=await (await fetch(dataURL)).blob();
+    const file=new File([blob],'阅读卡片.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:'锋刊阅读卡片'}); return; }catch(e){ /* 用户取消分享则走下载 */ }
+    }
+  }catch(e){}
+  const a=document.createElement('a'); a.href=dataURL; a.download='阅读卡片.png'; document.body.appendChild(a); a.click(); a.remove();
+}
+async function shareNote(n){
+  try{
+    const url=await buildShareCard(n);
+    showCardModal(url,n);
+  }catch(e){ copyText(buildTextCard(n)); }
+}
+function exportNotes(){
+  const notes=getNotes();
+  if(!notes.length){ flash('暂无笔记可导出'); return; }
+  const groups=new Map();
+  notes.forEach(n=>{ const k=n.bookId||n.bookTitle||'其他'; if(!groups.has(k)) groups.set(k,{title:n.bookTitle||'其他',items:[]}); groups.get(k).items.push(n); });
+  let md='# 我的阅读笔记\n\n';
+  groups.forEach(g=>{
+    md+=`## ${g.title}\n\n`;
+    g.items.forEach(n=>{
+      md+=`> ${n.text}\n\n`;
+      if(n.note) md+=`**我的想法**：${n.note}\n\n`;
+      md+=`\`第${n.chapter||1}章\`\n\n`;
+    });
+  });
+  const blob=new Blob([md],{type:'text/markdown'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='阅读笔记.md'; a.click();
+  flash('已导出 Markdown');
+}
+function renderNotes(){
+  const el=document.getElementById('notesView');
+  const notes=getNotes();
+  const groups=new Map();
+  notes.forEach(n=>{ const k=n.bookId||n.bookTitle||'其他'; if(!groups.has(k)) groups.set(k,{title:n.bookTitle||'其他',items:[]}); groups.get(k).items.push(n); });
+  let html=`<h2>📝 我的笔记 <small style="color:var(--muted);font-size:13px">划线 · 想法 · 分享</small></h2>
+    <div class="note-actions"><button class="upbtn" id="exportNotes">⬇ 导出全部笔记</button></div>`;
+  if(!notes.length){ html+=`<div class="hint">还没有笔记。阅读外刊或小说时，选中文字点「✏️ 划线收藏」，就会出现在这里；每一条都能加想法、分享给朋友。</div>`; }
+  groups.forEach(g=>{
+    html+=`<h3 class="bh">${esc(g.title)}</h3><div class="notes-list">${g.items.map(n=>`
+      <div class="note-card" data-id="${n.id}">
+        <div class="note-text">“${esc(n.text)}”${n.textCn?`<div class="note-cn">${esc(n.textCn)}</div>`:''}</div>
+        <div class="note-meta">第${n.chapter||1}章 · ${new Date(n.ts).toLocaleDateString()}</div>
+        <div class="note-note">${n.note?esc(n.note):'<span class="note-empty">点「+ 想法」写点自己的理解</span>'}</div>
+        <div class="note-btns">
+          <button class="nb" data-act="share" data-id="${n.id}">📤 分享</button>
+          <button class="nb" data-act="note" data-id="${n.id}">${n.note?'✏️ 改想法':'+ 想法'}</button>
+          <button class="nb del" data-act="del" data-id="${n.id}">🗑</button>
+        </div>
+      </div>`).join('')}</div>`;
+  });
+  el.innerHTML=html;
+  const ex=document.getElementById('exportNotes'); if(ex) ex.onclick=exportNotes;
+  el.querySelectorAll('.nb').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.id, act=b.dataset.act; const all=getNotes(); const n=all.find(x=>x.id===id); if(!n)return;
+    if(act==='share') shareNote(n);
+    else if(act==='note'){ const t=prompt('写点你的想法：', n.note||''); if(t!==null){ n.note=t.trim(); saveNotes(all); renderNotes(); } }
+    else if(act==='del'){ saveNotes(all.filter(x=>x.id!==id)); renderNotes(); }
+  });
+}
 function bindWords(){
+  try{
   const wrap=document.getElementById('bodyWrap');
   wrap.innerHTML=renderBody(CUR);
   wrap.querySelectorAll('.para').forEach(p=>{
@@ -695,6 +1055,12 @@ function bindWords(){
   wrap.querySelectorAll('.collocation').forEach(sp=>sp.onclick=(e)=>{e.stopPropagation();showPop(sp.textContent,e.clientX,e.clientY);});
   wrap.querySelectorAll('.tbtn').forEach(b=>b.onclick=(e)=>{e.stopPropagation();toggleParaCn(b.dataset.i);});
   wrap.querySelectorAll('.gbtn').forEach(b=>b.onclick=(e)=>{e.stopPropagation();openGrammar(b.dataset.i);});
+  wrap.querySelectorAll('.hbtn').forEach(b=>b.onclick=(e)=>{e.stopPropagation(); addSegmentHighlight(parseInt(b.dataset.i,10));});
+  }catch(e){
+    console.error('bindWords error:',e);
+    const wrap=document.getElementById('bodyWrap');
+    if(wrap) wrap.innerHTML=`<div class="hint" style="color:#c0392b;border-color:#c0392b">⚠ 正文加载失败：${esc(String(e&&e.message||e))}<br><small>请强刷（Ctrl+Shift+R）或清浏览器存储后重试。</small></div>`;
+  }
 }
 function walkWrap(node){
   [...node.childNodes].forEach(child=>{
@@ -722,6 +1088,9 @@ function setMode(m){MODE=m;document.querySelectorAll('#modeSeg button').forEach(
   if(m==='alt'){ // 穿插：每个英文段后显示其中文（已渲染）
     document.querySelectorAll('#bodyWrap .para.cn').forEach(p=>p.classList.remove('hidecn'));
   }
+  // 摘要 dek 随模式切换（仅英→英文摘要；其它→中文摘要）
+  const dek=document.getElementById('articleDek');
+  if(dek && CUR){ dek.textContent = (m==='en' ? (CUR.excerpt||'') : (CUR.excerptCn||CUR.excerpt||'')); }
 }
 function toggleParaCn(i){
   const cn=document.querySelector(`#bodyWrap .para.cn[data-ci="${i}"]`);
@@ -772,7 +1141,7 @@ async function showPop(word,x,y){
     }
   }
 }
-function speak(w){try{const u=new SpeechSynthesisUtterance(w);u.lang='en-US';u.rate=.95;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+function speak(w){try{const u=new SpeechSynthesisUtterance(w);const v=pickVoice();if(v)u.voice=v;u.lang='en-US';u.rate=.95;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
 
 /* ============ 长难句语法分析（规则驱动，离线） ============ */
 const CONN=[
@@ -892,7 +1261,7 @@ function sentPool(){const pool=DAILY_SENTENCES.map(d=>({en:d.en,cn:d.cn,src:d.sr
   ARTICLES.forEach(a=>(a.quotes||[]).forEach(q=>{const en=typeof q==='string'?q:(q.text||'');if(en)pool.push({en,cn:'',src:a.source});}));
   getSent().forEach(s=>pool.push({en:s.en,cn:s.cn,src:s.src}));return pool;}
 function hasRec(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
-function speakSlow(w){try{const u=new SpeechSynthesisUtterance(w);u.lang='en-US';u.rate=.8;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+function speakSlow(w){try{const u=new SpeechSynthesisUtterance(w);const v=pickVoice();if(v)u.voice=v;u.lang='en-US';u.rate=.8;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
 function scorePron(transcript,original){const norm=s=>s.toLowerCase().replace(/[^a-z'\s]/g,' ').split(/\s+/).filter(Boolean);
   const o=norm(original),t=norm(transcript||'');if(!t.length||!o.length)return{acc:0,hit:0,total:o.length};
   const bag={};o.forEach(w=>bag[w]=(bag[w]||0)+1);let hit=0;t.forEach(w=>{if(bag[w]>0){bag[w]--;hit++;}});
@@ -1152,10 +1521,12 @@ function showView(v){
   document.getElementById('homeView').classList.toggle('hidden',v!=='home');
   document.getElementById('booksView').classList.toggle('hidden',v!=='books');
   document.getElementById('learnView').classList.toggle('hidden',v!=='learn');
+  document.getElementById('notesView').classList.toggle('hidden',v!=='notes');
   document.getElementById('vocabView').classList.toggle('hidden',v!=='vocab');
   document.getElementById('settingsView').classList.toggle('hidden',v!=='settings');
   document.querySelectorAll('.nav button[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
   if(v==='books')renderBooks();
+  if(v==='notes')renderNotes();
   if(v==='learn')renderLearn();if(v==='vocab')renderVocab();if(v==='settings')renderSettings();
   if(v!=='home')document.getElementById('reader').classList.remove('open');
 }
@@ -1170,7 +1541,9 @@ document.getElementById('reader').addEventListener('scroll',e=>{
 async function init(){
   document.getElementById('todayDate').textContent=fmtDate();
   applyTheme();
+  loadVoices();
   await Promise.all([loadData(),loadDict(),loadBooksData()]);
+  migrateVocabQuotes();
   renderRail();renderCats();renderDaily();renderHome();
   document.getElementById('search').oninput=e=>{curQ=e.target.value;renderHome();};
   document.querySelectorAll('.nav button[data-view]').forEach(b=>b.onclick=()=>showView(b.dataset.view));
